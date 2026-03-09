@@ -58,7 +58,8 @@ export async function fetchAAMeetings(): Promise<Meeting[]> {
 
   for (const group of groups) {
     for (const [dayName, slots] of Object.entries(group.meetings.days)) {
-      for (const slot of slots) {
+      for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i]
         if (!slot) continue
         const day = DAY_MAP[dayName]
         if (day === undefined) continue
@@ -66,7 +67,7 @@ export async function fetchAAMeetings(): Promise<Meeting[]> {
         const attendanceOption: AttendanceOption = group.online ? 'online' : 'in_person'
 
         meetings.push({
-          id: `aa-${group.ID}-${dayName}-${slot.time}`,
+          id: `aa-${group.ID}-${dayName}-${i}-${slot.time}`,
           source: 'AA',
           name: group.title,
           day,

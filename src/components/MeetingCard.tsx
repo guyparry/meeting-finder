@@ -1,4 +1,5 @@
 import type { Meeting } from '@/types/meeting'
+import { formatDistance } from '@/lib/geo'
 
 const SOURCE_STYLES = {
   AA: 'bg-blue-100 text-blue-800',
@@ -14,7 +15,7 @@ const ATTENDANCE_LABELS: Record<string, string> = {
   phone: 'Telefon',
 }
 
-export function MeetingCard({ meeting }: { meeting: Meeting }) {
+export function MeetingCard({ meeting, distance }: { meeting: Meeting; distance?: number }) {
   const {
     source, name, day, time, endTime, address, formattedAddress,
     location, attendanceOption, language, region, email, phone,
@@ -46,6 +47,9 @@ export function MeetingCard({ meeting }: { meeting: Meeting }) {
         )}
         {accessible && (
           <span className="text-xs text-gray-400" title="Rullstolsanpassad">♿</span>
+        )}
+        {distance != null && (
+          <span className="text-xs text-gray-400 ml-auto">{formatDistance(distance)}</span>
         )}
       </div>
 
