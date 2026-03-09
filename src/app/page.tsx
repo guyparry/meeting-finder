@@ -1,12 +1,21 @@
 import { MeetingsClient } from '@/components/MeetingsClient'
-import type { Meeting } from '@/types/meeting'
+import { fetchAAMeetings } from '@/lib/sources/aa'
+import { fetchCAMeetings } from '@/lib/sources/ca'
+import { fetchACAMeetings } from '@/lib/sources/aca'
 
-async function getMeetings(): Promise<Meeting[]> {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
-  const res = await fetch(`${base}/api/meetings`, { next: { revalidate: 3600 } })
-  if (!res.ok) return []
-  const data = await res.json()
-  return data.meetings ?? []
+export const revalidate = 3600
+
+async function getMeetings() {
+  const [aa, ca, aca] = await Promise.allSettled([
+    fetchAAMeetings(),
+    fetchCAMeetings(),
+    fetchACAMeetings(),
+  ])
+  return [
+    ...(aa.status === 'fulfilled' ? aa.value : []),
+    ...(ca.status === 'fulfilled' ? ca.value : []),
+    ...(aca.status === 'fulfilled' ? aca.value : []),
+  ]
 }
 
 export default async function Home() {
