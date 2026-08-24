@@ -1,5 +1,6 @@
 'use client'
 
+import { track } from '@vercel/analytics'
 import { useState, useCallback } from 'react'
 
 export type LocationState =
@@ -24,6 +25,10 @@ export function useUserLocation() {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         })
+        track('location_granted', {
+          latitude: Number(pos.coords.latitude.toFixed(4)),
+          longitude: Number(pos.coords.longitude.toFixed(4)),
+        })
       },
       err => {
         const message =
@@ -31,6 +36,10 @@ export function useUserLocation() {
             ? 'Platsåtkomst nekades.'
             : 'Kunde inte hämta din plats.'
         setLocation({ status: 'denied', message })
+        track('location_denied', {
+          code: err.code,
+          message,
+        })
       },
       { timeout: 10000, maximumAge: 300_000 },
     )

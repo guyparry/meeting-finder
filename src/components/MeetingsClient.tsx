@@ -1,5 +1,6 @@
 'use client'
 
+import { track } from '@vercel/analytics'
 import { useState, useMemo } from 'react'
 import type { Meeting, Source, AttendanceOption } from '@/types/meeting'
 import { MeetingCard } from './MeetingCard'
@@ -149,6 +150,39 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
   const activeFilters =
     days.length + sources.length + attendance.length + (search ? 1 : 0)
 
+  const handleSearch = (value: string) => {
+    setSearch(value)
+    if (value.trim().length > 0) {
+      track('meeting_search', { length: value.length })
+    }
+  }
+
+  const handleToggleDays = (value: number) => {
+    const next = toggle(days, value)
+    setDays(next)
+    track('meeting_filter_toggled', { kind: 'day', value, active: next.includes(value) })
+  }
+
+  const handleToggleSources = (value: Source) => {
+    const next = toggle(sources, value)
+    setSources(next)
+    track('meeting_filter_toggled', { kind: 'source', value, active: next.includes(value) })
+  }
+
+  const handleToggleAttendance = (value: AttendanceOption) => {
+    const next = toggle(attendance, value)
+    setAttendance(next)
+    track('meeting_filter_toggled', { kind: 'attendance', value, active: next.includes(value) })
+  }
+
+  const handleClearFilters = () => {
+    setSearch('')
+    setDays([])
+    setSources([])
+    setAttendance([])
+    track('meeting_filters_cleared', { count: activeFilters })
+  }
+
   const nextClosestDistance =
     nextClosest && userLat != null && userLng != null && nextClosest.latitude != null && nextClosest.longitude != null
       ? haversineKm(userLat, userLng, nextClosest.latitude, nextClosest.longitude)
@@ -260,7 +294,7 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
           type="search"
           placeholder="Sök möte, plats, stad..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => handleSearch(e.target.value)}
           className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
         />
 
@@ -271,7 +305,7 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
               <FilterButton
                 key={d.value}
                 active={days.includes(d.value)}
-                onClick={() => setDays(toggle(days, d.value))}
+                onClick={() => handleToggleDays(d.value)}
               >
                 {d.label}
               </FilterButton>
@@ -287,7 +321,7 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
                 <FilterButton
                   key={s}
                   active={sources.includes(s)}
-                  onClick={() => setSources(toggle(sources, s))}
+                  onClick={() => handleToggleSources(s)}
                 >
                   {s}
                 </FilterButton>
@@ -302,7 +336,7 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
                 <FilterButton
                   key={a.value}
                   active={attendance.includes(a.value)}
-                  onClick={() => setAttendance(toggle(attendance, a.value))}
+                  onClick={() => handleToggleAttendance(a.value)}
                 >
                   {a.label}
                 </FilterButton>
@@ -313,7 +347,7 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
 
         {activeFilters > 0 && (
           <button
-            onClick={() => { setSearch(''); setDays([]); setSources([]); setAttendance([]) }}
+            onClick={handleClearFilters}
             className="text-xs text-gray-400 hover:text-gray-600 self-start"
           >
             Rensa filter ({activeFilters})
