@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react'
 import type { Meeting, Source, AttendanceOption } from '@/types/meeting'
 import { MeetingCard } from './MeetingCard'
 import { useUserLocation } from '@/hooks/useUserLocation'
-import { haversineKm } from '@/lib/geo'
+import { formatDistance, haversineKm } from '@/lib/geo'
+import { getNextClosestMeeting } from '@/lib/nextClosest'
 
 const DAYS = [
   { label: 'Måndag', value: 1 },
@@ -98,8 +99,6 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
     return map
   }, [meetings, hasLocation, userLat, userLng])
 
-  const upcoming = useMemo(() => getUpcomingMeetings(meetings, 3), [meetings])
-
   const filtered = useMemo(() => {
     return meetings.filter(m => {
       if (days.length > 0 && !days.includes(m.day)) return false
@@ -117,6 +116,12 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
       return true
     })
   }, [meetings, days, sources, attendance, search])
+
+  const upcoming = useMemo(() => getUpcomingMeetings(meetings, 3), [meetings])
+  const nextClosest = useMemo(
+    () => getNextClosestMeeting(filtered, userLat, userLng),
+    [filtered, userLat, userLng],
+  )
 
   const grouped = useMemo(() => {
     if (sortMode === 'proximity' && hasLocation) {
@@ -144,8 +149,33 @@ export function MeetingsClient({ meetings }: { meetings: Meeting[] }) {
   const activeFilters =
     days.length + sources.length + attendance.length + (search ? 1 : 0)
 
+  const nextClosestDistance =
+    nextClosest && userLat != null && userLng != null && nextClosest.latitude != null && nextClosest.longitude != null
+      ? haversineKm(userLat, userLng, nextClosest.latitude, nextClosest.longitude)
+      : undefined
+
   return (
     <div className="flex flex-col gap-6">
+      {nextClosest && nextClosestDistance != null && (
+        <div className="bg-gray-900 text-white rounded-2xl p-4 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-300">
+              Nästa möte
+            </span>
+            <span className="text-xs text-gray-300">{formatDistance(nextClosestDistance)}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="font-semibold">{nextClosest.name}</div>
+              <div className="text-sm text-gray-300">
+                {DAY_NAMES[nextClosest.day]} {nextClosest.time}
+              </div>
+            </div>
+            <span className="text-xs bg-white/10 px-2 py-1 rounded-full">{nextClosest.source}</span>
+          </div>
+        </div>
+      )}
+
       {/* Upcoming meetings panel */}
       <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 flex flex-col gap-3">
         <div className="flex items-center justify-between">
