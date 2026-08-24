@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { scoreNextClosestMeeting } from './nextClosest.ts'
+import { scoreNextClosestMeeting } from './nextClosest'
 
 test('prefers a very near meeting that is later today over a farther meeting sooner in the week', () => {
   const now = new Date('2026-08-24T18:00:00+02:00')

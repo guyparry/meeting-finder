@@ -1,5 +1,5 @@
-import type { Meeting } from '../types/meeting.ts'
-import { haversineKm } from './geo.ts'
+import type { Meeting } from '../types/meeting'
+import { haversineKm } from './geo'
 
 export function getMeetingMinutes(meeting: Pick<Meeting, 'day' | 'time'>, now: Date): number {
   const stockholmNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Stockholm' }))
